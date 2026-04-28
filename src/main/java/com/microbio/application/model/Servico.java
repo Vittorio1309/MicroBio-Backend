@@ -32,5 +32,5 @@ public class Servico {
     @OneToMany(mappedBy = "servico", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Orcamento> orcamentos = new ArrayList<>();
 
-    public Servico(){}
+
 }
