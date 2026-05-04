@@ -1,13 +1,16 @@
 package com.microbio.application.service;
 
+import com.microbio.application.dto.*;
+import com.microbio.application.exception.ResourceNotFoundException;
 import com.microbio.application.model.Servico;
 import com.microbio.application.repository.ServicoRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
+@Transactional
 public class ServicoService {
 
     private final ServicoRepository repository;
@@ -16,19 +19,52 @@ public class ServicoService {
         this.repository = repository;
     }
 
-    public List<Servico> findAll() {
-        return repository.findAll();
+    @Transactional(readOnly = true)
+    public List<ServicoDTO> findAll() {
+        return repository.findAll().stream().map(this::toDTO).toList();
     }
 
-    public Optional<Servico> findById(Long id) {
-        return repository.findById(id);
+    @Transactional(readOnly = true)
+    public ServicoDTO findById(Long id) {
+        return repository.findById(id)
+                .map(this::toDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("Serviço", id));
     }
 
-    public Servico save(Servico servico) {
-        return repository.save(servico);
+    // Usado internamente
+    public Servico findEntityById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Serviço", id));
     }
 
-    public void deleteById(Long id) {
+    public ServicoDTO create(ServicoCreateDTO dto) {
+        Servico servico = new Servico();
+        servico.setNome(dto.nome());
+        servico.setDescricao(dto.descricao());
+        servico.setPreco(dto.preco());
+        return toDTO(repository.save(servico));
+    }
+
+    public ServicoDTO update(Long id, ServicoUpdateDTO dto) {
+        Servico servico = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Serviço", id));
+        if (dto.nome() != null) servico.setNome(dto.nome());
+        if (dto.descricao() != null) servico.setDescricao(dto.descricao());
+        if (dto.preco() != null) servico.setPreco(dto.preco());
+        return toDTO(repository.save(servico));
+    }
+
+    public void delete(Long id) {
+        if (!repository.existsById(id)) {
+            throw new ResourceNotFoundException("Serviço", id);
+        }
         repository.deleteById(id);
+    }
+
+    private ServicoDTO toDTO(Servico s) {
+        List<PerguntaServicoDTO> perguntas = s.getPerguntas().stream()
+                .map(p -> new PerguntaServicoDTO(p.getId(), p.getPergunta(), p.getObrigatoria(), s.getId()))
+                .toList();
+        return new ServicoDTO(s.getId(), s.getNome(), s.getDescricao(), s.getPreco(), perguntas);
     }
 }
