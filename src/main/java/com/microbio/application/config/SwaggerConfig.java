@@ -1,14 +1,29 @@
 package com.microbio.application.config;
 
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * Configuração do Swagger
- * Documentação disponível em: /swagger-ui.html
- */
 @Configuration
 public class SwaggerConfig {
-    // Swagger é auto-configurado pelo Spring Boot
+
+    @Bean
+    public OpenAPI openAPI() {
+        return new OpenAPI()
+                .info(new Info()
+                        .title("MicroBio API")
+                        .description("API REST para o sistema MicroBio — análises microbiológicas e agronômicas")
+                        .version("1.0.0"))
+                .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
+                .components(new Components()
+                        .addSecuritySchemes("Bearer Authentication",
+                                new SecurityScheme()
+                                        .type(SecurityScheme.Type.HTTP)
+                                        .scheme("bearer")
+                                        .bearerFormat("JWT")));
+    }
 }
-
-
