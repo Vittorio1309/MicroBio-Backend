@@ -1,30 +1,35 @@
 package com.microbio.application.controller;
 
-import com.microbio.application.dto.LoginRequest;
 import com.microbio.application.dto.AuthResponse;
-import com.microbio.application.service.CustomUserDetailsService;
+import com.microbio.application.dto.LoginRequest;
+import com.microbio.application.security.JwtUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.OPTIONS})
+@Tag(name = "Autenticação", description = "Endpoints de autenticação")
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
-    private final CustomUserDetailsService userDetailsService;
+    private final JwtUtil jwtUtil;
 
-    public AuthController(AuthenticationManager authenticationManager, CustomUserDetailsService userDetailsService) {
+    public AuthController(AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
         this.authenticationManager = authenticationManager;
-        this.userDetailsService = userDetailsService;
+        this.jwtUtil = jwtUtil;
     }
 
     @PostMapping("/login")
+    @Operation(summary = "Realizar login e obter token JWT")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest) {
         try {
             Authentication authentication = authenticationManager.authenticate(
@@ -34,51 +39,32 @@ public class AuthController {
                     )
             );
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            String token = jwtUtil.generateToken(userDetails);
+            String role = userDetails.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .findFirst()
+                    .orElse("ROLE_USER");
 
-            return ResponseEntity.ok(new AuthResponse(
-                    true,
-                    "Login realizado com sucesso",
-                    loginRequest.username()
-            ));
-        } catch (Exception e) {
+            return ResponseEntity.ok(new AuthResponse(true, "Login realizado com sucesso", userDetails.getUsername(), token, role));
+
+        } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new AuthResponse(
-                            false,
-                            "Usuário ou senha incorretos",
-                            null
-                    ));
+                    .body(new AuthResponse(false, "Usuário ou senha incorretos", null, null, null));
         }
-    }
-
-    @PostMapping("/logout")
-    public ResponseEntity<AuthResponse> logout() {
-        SecurityContextHolder.clearContext();
-        return ResponseEntity.ok(new AuthResponse(
-                true,
-                "Logout realizado com sucesso",
-                null
-        ));
     }
 
     @GetMapping("/me")
-    public ResponseEntity<AuthResponse> getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        
-        if (authentication != null && authentication.isAuthenticated() && !authentication.getName().equals("anonymousUser")) {
-            return ResponseEntity.ok(new AuthResponse(
-                    true,
-                    "Usuário autenticado",
-                    authentication.getName()
-            ));
-        } else {
+    @Operation(summary = "Retorna informações do usuário autenticado")
+    public ResponseEntity<AuthResponse> me(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new AuthResponse(
-                            false,
-                            "Não autenticado",
-                            null
-                    ));
+                    .body(new AuthResponse(false, "Não autenticado", null, null, null));
         }
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String role = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst().orElse("");
+        return ResponseEntity.ok(new AuthResponse(true, "Autenticado", userDetails.getUsername(), null, role));
     }
 }
-
