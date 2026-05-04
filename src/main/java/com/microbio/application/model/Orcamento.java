@@ -1,20 +1,22 @@
 package com.microbio.application.model;
 
-import com.microbio.application.dto.OrcamentoStatus;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import jakarta.persistence.*;
-import java.time.LocalDateTime;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "orcamento")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class Orcamento {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -28,6 +30,8 @@ public class Orcamento {
 
     private String observacao;
 
+    private BigDecimal valorTotal;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pessoa_id", nullable = false)
     private Pessoa pessoa;
@@ -36,4 +40,9 @@ public class Orcamento {
     @JoinColumn(name = "servico_id", nullable = false)
     private Servico servico;
 
+    @OneToMany(mappedBy = "orcamento", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<RespostaOrcamento> respostas = new ArrayList<>();
+
+    @OneToMany(mappedBy = "orcamento", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<ResultadoExame> resultados = new ArrayList<>();
 }
