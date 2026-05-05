@@ -1,16 +1,17 @@
 package com.microbio.application.controller;
 
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-@Controller
-@RequestMapping("/")
+/**
+ * LoginController foi removido.
+ * O login é feito via REST API em AuthController (/api/auth/login).
+ * Não utilizamos Thymeleaf para autenticação.
+ *
+ * ENDPOINTS DE AUTENTICAÇÃO:
+ * POST /api/auth/login - Login com token JWT
+ * POST /api/auth/logout - Logout
+ * GET /api/auth/me - Informações do usuário autenticado
+ */
+@Deprecated(since = "1.0", forRemoval = true)
 public class LoginController {
-
-    @GetMapping("login")
-    public String login() {
-        return "login";
-    }
+    // Deprecated
 }
 
