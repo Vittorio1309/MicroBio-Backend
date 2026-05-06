@@ -28,6 +28,9 @@ public class Usuario {
     @NotBlank
     @Column(nullable = false)
     private String role;
+    
+    @Column(name = "pessoa_id")
+    private Long pessoaId;
 
     public Usuario(String username, String senha, String role) {
         this.username = username;
@@ -35,4 +38,3 @@ public class Usuario {
         this.role = role;
     }
 }
-
