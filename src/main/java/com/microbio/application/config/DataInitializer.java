@@ -20,10 +20,24 @@ public class DataInitializer {
             PessoaRepository pessoaRepository,
             PasswordEncoder passwordEncoder) {
         return args -> {
+            // Pessoa de exemplo
+            Pessoa pessoaExemplo = null;
+            if (pessoaRepository.count() == 0) {
+                pessoaExemplo = pessoaRepository.save(new Pessoa("Cliente Exemplo", "cliente@microbio.com.br", "(41) 99999-0000"));
+                System.out.println("✓ Pessoa de exemplo criada");
+            } else {
+                pessoaExemplo = pessoaRepository.findAll().get(0);
+            }
+
             // Usuários
             if (usuarioRepository.count() == 0) {
-                usuarioRepository.save(new Usuario("admin", passwordEncoder.encode("admin123"), "ADMIN"));
-                usuarioRepository.save(new Usuario("user", passwordEncoder.encode("user123"), "USER"));
+                Usuario admin = new Usuario("admin", passwordEncoder.encode("admin123"), "ADMIN");
+                Usuario user = new Usuario("user", passwordEncoder.encode("user123"), "USER");
+                if (pessoaExemplo != null) {
+                    user.setPessoaId(pessoaExemplo.getId());
+                }
+                usuarioRepository.save(admin);
+                usuarioRepository.save(user);
                 System.out.println("✓ Usuários iniciais criados: admin/admin123 | user/user123");
             }
 
@@ -59,12 +73,6 @@ public class DataInitializer {
                 perguntaRepository.save(criarPergunta("Qual a data de produção/validade?", true, s3));
 
                 System.out.println("✓ Serviços e perguntas de exemplo criados");
-            }
-
-            // Pessoa de exemplo
-            if (pessoaRepository.count() == 0) {
-                pessoaRepository.save(new Pessoa("Cliente Exemplo", "cliente@microbio.com.br", "(41) 99999-0000"));
-                System.out.println("✓ Pessoa de exemplo criada");
             }
         };
     }
