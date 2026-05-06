@@ -3,6 +3,7 @@ package com.microbio.application;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+
 @SpringBootApplication(scanBasePackages = "com.microbio.application")
 public class Application {
 
