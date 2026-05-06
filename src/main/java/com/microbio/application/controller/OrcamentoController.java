@@ -3,12 +3,15 @@ package com.microbio.application.controller;
 import com.microbio.application.dto.OrcamentoCreateDTO;
 import com.microbio.application.dto.OrcamentoDTO;
 import com.microbio.application.dto.OrcamentoUpdateDTO;
+import com.microbio.application.dto.MeusPedidosDTO;
 import com.microbio.application.model.OrcamentoStatus;
+import com.microbio.application.repository.UsuarioRepository;
 import com.microbio.application.service.OrcamentoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,9 +22,11 @@ import java.util.List;
 public class OrcamentoController {
 
     private final OrcamentoService service;
+    private final UsuarioRepository usuarioRepository;
 
-    public OrcamentoController(OrcamentoService service) {
+    public OrcamentoController(OrcamentoService service, UsuarioRepository usuarioRepository) {
         this.service = service;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @GetMapping
@@ -65,5 +70,30 @@ public class OrcamentoController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/meus-pedidos")
+    @Operation(summary = "Retorna orçamentos do usuário autenticado com filtro opcional por status")
+    public ResponseEntity<List<MeusPedidosDTO>> meusPedidos(
+            Authentication authentication,
+            @RequestParam(required = false) OrcamentoStatus status) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        String username = authentication.getName();
+        Long pessoaId = getPessoaIdFromUsername(username);
+
+        if (pessoaId == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        return ResponseEntity.ok(service.getMeusPedidos(pessoaId, status));
+    }
+
+    private Long getPessoaIdFromUsername(String username) {
+        return usuarioRepository.findByUsername(username)
+                .map(u -> u.getPessoaId())
+                .orElse(null);
     }
 }
