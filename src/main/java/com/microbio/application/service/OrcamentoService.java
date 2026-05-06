@@ -158,4 +158,24 @@ public class OrcamentoService {
                 respostas
         );
     }
+
+    @Transactional(readOnly = true)
+    public List<MeusPedidosDTO> getMeusPedidos(Long pessoaId, OrcamentoStatus status) {
+        List<OrcamentoDTO> orcamentos = orcamentoRepository
+                .findByPessoaIdAndStatus(pessoaId, status)
+                .stream()
+                .map(this::toDTO)
+                .toList();
+
+        return orcamentos.stream()
+                .map(o -> new MeusPedidosDTO(
+                        o.id(),
+                        o.dataCriacao(),
+                        o.status(),
+                        o.servicoNome(),
+                        o.valorTotal(),
+                        o.observacao()
+                ))
+                .toList();
+    }
 }
