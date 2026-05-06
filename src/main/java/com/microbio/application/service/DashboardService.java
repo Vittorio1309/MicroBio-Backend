@@ -15,12 +15,9 @@ import java.util.List;
 public class DashboardService {
 
     private final OrcamentoRepository orcamentoRepository;
-    private final ResultadoExameRepository resultadoExameRepository;
 
-    public DashboardService(OrcamentoRepository orcamentoRepository,
-                            ResultadoExameRepository resultadoExameRepository) {
+    public DashboardService(OrcamentoRepository orcamentoRepository) {
         this.orcamentoRepository = orcamentoRepository;
-        this.resultadoExameRepository = resultadoExameRepository;
     }
 
     /**
@@ -52,4 +49,5 @@ public class DashboardService {
                 .toList();
     }
 }
+
 
