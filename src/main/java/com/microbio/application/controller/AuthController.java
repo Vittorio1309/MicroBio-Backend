@@ -2,6 +2,11 @@ package com.microbio.application.controller;
 
 import com.microbio.application.dto.AuthResponse;
 import com.microbio.application.dto.LoginRequest;
+import com.microbio.application.exception.BusinessException;
+import com.microbio.application.exception.ResourceNotFoundException;
+import com.microbio.application.model.Usuario;
+import com.microbio.application.repository.PessoaRepository;
+import com.microbio.application.repository.UsuarioRepository;
 import com.microbio.application.security.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,6 +18,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -22,10 +28,17 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+    private final UsuarioRepository usuarioRepository;
+    private final PessoaRepository pessoaRepository;
 
-    public AuthController(AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
+    public AuthController(AuthenticationManager authenticationManager,
+                          JwtUtil jwtUtil,
+                          UsuarioRepository usuarioRepository,
+                          PessoaRepository pessoaRepository) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
+        this.usuarioRepository = usuarioRepository;
+        this.pessoaRepository = pessoaRepository;
     }
 
     @PostMapping("/login")
@@ -66,5 +79,30 @@ public class AuthController {
                 .map(GrantedAuthority::getAuthority)
                 .findFirst().orElse("");
         return ResponseEntity.ok(new AuthResponse(true, "Autenticado", userDetails.getUsername(), null, role));
+    }
+
+    @PutMapping("/vincular-pessoa/{pessoaId}")
+    @Transactional
+    @Operation(summary = "Vincula o usuário autenticado a uma pessoa cadastrada")
+    public ResponseEntity<AuthResponse> vincularPessoa(
+            @PathVariable Long pessoaId,
+            Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new AuthResponse(false, "Não autenticado", null, null, null));
+        }
+
+        if (!pessoaRepository.existsById(pessoaId)) {
+            throw new ResourceNotFoundException("Pessoa", pessoaId);
+        }
+
+        String username = authentication.getName();
+        Usuario usuario = usuarioRepository.findByUsername(username)
+                .orElseThrow(() -> new BusinessException("Usuário não encontrado: " + username));
+
+        usuario.setPessoaId(pessoaId);
+        usuarioRepository.save(usuario);
+
+        return ResponseEntity.ok(new AuthResponse(true, "Pessoa vinculada com sucesso", username, null, usuario.getRole()));
     }
 }
