@@ -5,6 +5,7 @@ import com.microbio.application.dto.ResultadoDashboardDTO;
 import com.microbio.application.model.OrcamentoStatus;
 import com.microbio.application.repository.OrcamentoRepository;
 import com.microbio.application.repository.ResultadoExameRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,36 +16,31 @@ import java.util.List;
 public class DashboardService {
 
     private final OrcamentoRepository orcamentoRepository;
+    private final ResultadoExameRepository resultadoExameRepository;
 
-    public DashboardService(OrcamentoRepository orcamentoRepository) {
+    public DashboardService(OrcamentoRepository orcamentoRepository,
+                            ResultadoExameRepository resultadoExameRepository) {
         this.orcamentoRepository = orcamentoRepository;
+        this.resultadoExameRepository = resultadoExameRepository;
     }
 
-    /**
-     * Retorna estatísticas totais de orçamentos
-     */
     public EstatisticasDTO getEstatisticas() {
         long totalOrcamentos = orcamentoRepository.count();
-        long totalPendente = orcamentoRepository.findByStatus(OrcamentoStatus.PENDENTE).size();
-        long totalFinalizado = orcamentoRepository.findByStatus(OrcamentoStatus.FINALIZADO).size();
-
+        long totalPendente = orcamentoRepository.countByStatus(OrcamentoStatus.PENDENTE);
+        long totalFinalizado = orcamentoRepository.countByStatus(OrcamentoStatus.FINALIZADO);
         return new EstatisticasDTO(totalOrcamentos, totalPendente, totalFinalizado);
     }
 
-    /**
-     * Retorna os últimos 10 resultados de exames com informações dos orçamentos
-     */
     public List<ResultadoDashboardDTO> getResultadosRecentes() {
-        return orcamentoRepository.findAll().stream()
-                .sorted((o1, o2) -> o2.getDataCriacao().compareTo(o1.getDataCriacao()))
-                .limit(10)
+        return orcamentoRepository.findRecentesComDetalhes(PageRequest.of(0, 10))
+                .stream()
                 .map(o -> new ResultadoDashboardDTO(
                         o.getId(),
                         o.getServico() != null ? o.getServico().getNome() : "N/A",
                         o.getPessoa() != null ? o.getPessoa().getNome() : "N/A",
                         o.getDataCriacao(),
                         o.getStatus(),
-                        !o.getResultados().isEmpty()
+                        resultadoExameRepository.existsByOrcamentoId(o.getId())
                 ))
                 .toList();
     }
