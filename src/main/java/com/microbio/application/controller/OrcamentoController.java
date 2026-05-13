@@ -4,11 +4,15 @@ import com.microbio.application.dto.OrcamentoCreateDTO;
 import com.microbio.application.dto.OrcamentoDTO;
 import com.microbio.application.dto.OrcamentoUpdateDTO;
 import com.microbio.application.dto.MeusPedidosDTO;
+import com.microbio.application.exception.BusinessException;
 import com.microbio.application.model.OrcamentoStatus;
 import com.microbio.application.repository.UsuarioRepository;
 import com.microbio.application.service.OrcamentoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -30,9 +34,11 @@ public class OrcamentoController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar todos os orçamentos")
-    public ResponseEntity<List<OrcamentoDTO>> getAll() {
-        return ResponseEntity.ok(service.findAll());
+    @Operation(summary = "Listar todos os orçamentos (paginado)")
+    public ResponseEntity<Page<OrcamentoDTO>> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(service.findAll(PageRequest.of(page, size, Sort.by("dataCriacao").descending())));
     }
 
     @GetMapping("/{id}")
@@ -85,7 +91,7 @@ public class OrcamentoController {
         Long pessoaId = getPessoaIdFromUsername(username);
 
         if (pessoaId == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            throw new BusinessException("Usuário não possui pessoa vinculada. Use PUT /api/auth/vincular-pessoa/{pessoaId}");
         }
 
         return ResponseEntity.ok(service.getMeusPedidos(pessoaId, status));
