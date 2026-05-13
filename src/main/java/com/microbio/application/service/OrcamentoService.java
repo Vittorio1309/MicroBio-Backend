@@ -5,6 +5,8 @@ import com.microbio.application.exception.BusinessException;
 import com.microbio.application.exception.ResourceNotFoundException;
 import com.microbio.application.model.*;
 import com.microbio.application.repository.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,8 +37,8 @@ public class OrcamentoService {
     }
 
     @Transactional(readOnly = true)
-    public List<OrcamentoDTO> findAll() {
-        return orcamentoRepository.findAll().stream().map(this::toDTO).toList();
+    public Page<OrcamentoDTO> findAll(Pageable pageable) {
+        return orcamentoRepository.findAll(pageable).map(this::toDTO);
     }
 
     @Transactional(readOnly = true)
@@ -161,20 +163,15 @@ public class OrcamentoService {
 
     @Transactional(readOnly = true)
     public List<MeusPedidosDTO> getMeusPedidos(Long pessoaId, OrcamentoStatus status) {
-        List<OrcamentoDTO> orcamentos = orcamentoRepository
-                .findByPessoaIdAndStatus(pessoaId, status)
+        return orcamentoRepository.findByPessoaIdAndStatus(pessoaId, status)
                 .stream()
-                .map(this::toDTO)
-                .toList();
-
-        return orcamentos.stream()
                 .map(o -> new MeusPedidosDTO(
-                        o.id(),
-                        o.dataCriacao(),
-                        o.status(),
-                        o.servicoNome(),
-                        o.valorTotal(),
-                        o.observacao()
+                        o.getId(),
+                        o.getDataCriacao(),
+                        o.getStatus(),
+                        o.getServico() != null ? o.getServico().getNome() : null,
+                        o.getValorTotal(),
+                        o.getObservacao()
                 ))
                 .toList();
     }
