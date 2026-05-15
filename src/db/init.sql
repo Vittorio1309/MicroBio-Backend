@@ -1,119 +1,107 @@
 -- =========================
 -- TABELA PESSOA
+-- Corresponde a: model/Pessoa.java
 -- =========================
-CREATE TABLE pessoa (
-                        pessoa_id SERIAL PRIMARY KEY,
-                        primeiro_nome VARCHAR(100) NOT NULL,
-                        sobrenome VARCHAR(100) NOT NULL,
-                        data_nascimento DATE NOT NULL
-                            CHECK (data_nascimento >= DATE '1900-01-01' AND data_nascimento <= CURRENT_DATE)
+CREATE TABLE IF NOT EXISTS pessoa (
+    id          BIGSERIAL PRIMARY KEY,
+    nome        VARCHAR(255) NOT NULL,
+    email       VARCHAR(255) NOT NULL UNIQUE,
+    telefone    VARCHAR(50)
 );
 
 -- =========================
 -- TABELA USUARIO
+-- Corresponde a: model/Usuario.java
 -- =========================
-DROP TABLE IF EXISTS usuario CASCADE;
-
-CREATE TABLE usuario (
-                         id SERIAL PRIMARY KEY,
-                         email VARCHAR(150) UNIQUE NOT NULL,
-                         senha VARCHAR(255) NOT NULL,
-                         role VARCHAR(50) NOT NULL
+CREATE TABLE IF NOT EXISTS usuario (
+    id          BIGSERIAL PRIMARY KEY,
+    username    VARCHAR(255) NOT NULL UNIQUE,
+    senha       VARCHAR(255) NOT NULL,
+    role        VARCHAR(50)  NOT NULL,
+    pessoa_id   BIGINT,
+    CONSTRAINT fk_usuario_pessoa FOREIGN KEY (pessoa_id) REFERENCES pessoa(id)
 );
 
 -- =========================
--- TABELA ENDERECO
+-- TABELA SERVICO
+-- Corresponde a: model/Servico.java
 -- =========================
-CREATE TABLE endereco (
-                          endereco_id SERIAL PRIMARY KEY,
-                          estado_uf CHAR(2) NOT NULL
-                              CHECK (estado_uf IN (
-                                                   'AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS',
-                                                   'MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC',
-                                                   'SP','SE','TO'
-                                  )),
-                          cep VARCHAR(10),
-                          cidade VARCHAR(100),
-                          rua VARCHAR(150),
-                          bairro VARCHAR(100),
-                          numero INTEGER,
-                          pessoa_id INTEGER,
-                          CONSTRAINT fk_endereco_pessoa
-                              FOREIGN KEY (pessoa_id) REFERENCES pessoa(pessoa_id)
+CREATE TABLE IF NOT EXISTS servico (
+    id          BIGSERIAL PRIMARY KEY,
+    nome        VARCHAR(255) NOT NULL,
+    descricao   TEXT,
+    preco       NUMERIC(19, 2)
 );
 
 -- =========================
--- TABELA NOTICIAS
+-- TABELA PERGUNTA_SERVICO
+-- Corresponde a: model/PerguntaServico.java
 -- =========================
-CREATE TABLE noticias (
-                          noticia_id SERIAL PRIMARY KEY,
-                          titulo VARCHAR(150) NOT NULL,
-                          conteudo TEXT NOT NULL,
-                          resumo TEXT,
-                          data_publicacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                          imagem_capa VARCHAR(255),
-                          usuario_id INTEGER,
-                          CONSTRAINT fk_noticia_usuario
-                              FOREIGN KEY (usuario_id) REFERENCES usuario(usuario_id)
+CREATE TABLE IF NOT EXISTS pergunta_servico (
+    id          BIGSERIAL PRIMARY KEY,
+    pergunta    TEXT         NOT NULL,
+    obrigatoria BOOLEAN      NOT NULL DEFAULT false,
+    servico_id  BIGINT,
+    CONSTRAINT fk_pergunta_servico FOREIGN KEY (servico_id) REFERENCES servico(id)
 );
 
 -- =========================
--- TABELA SERVICOS
+-- TABELA ORCAMENTO
+-- Corresponde a: model/Orcamento.java
 -- =========================
-CREATE TABLE servicos (
-                          servico_id SERIAL PRIMARY KEY,
-                          nome_servico VARCHAR(150) NOT NULL,
-                          descricao TEXT
+CREATE TABLE IF NOT EXISTS orcamento (
+    id              BIGSERIAL PRIMARY KEY,
+    data_criacao    TIMESTAMP    NOT NULL,
+    status          VARCHAR(50)  NOT NULL,
+    observacao      TEXT,
+    valor_total     NUMERIC(19, 2),
+    pessoa_id       BIGINT       NOT NULL,
+    servico_id      BIGINT       NOT NULL,
+    CONSTRAINT fk_orcamento_pessoa  FOREIGN KEY (pessoa_id)  REFERENCES pessoa(id),
+    CONSTRAINT fk_orcamento_servico FOREIGN KEY (servico_id) REFERENCES servico(id)
 );
 
 -- =========================
--- PERGUNTAS DOS SERVIÇOS
+-- TABELA RESPOSTA_ORCAMENTO
+-- Corresponde a: model/RespostaOrcamento.java
+-- Os dados do formulário (perguntas + respostas) são salvos aqui.
 -- =========================
-CREATE TABLE pergunta_servico (
-                                  pergunta_id SERIAL PRIMARY KEY,
-                                  descricao TEXT NOT NULL,
-                                  servico_id INTEGER,
-                                  CONSTRAINT fk_pergunta_servico
-                                      FOREIGN KEY (servico_id) REFERENCES servicos(servico_id)
+CREATE TABLE IF NOT EXISTS resposta_orcamento (
+    id              BIGSERIAL PRIMARY KEY,
+    resposta        TEXT,
+    pergunta_id     BIGINT,
+    orcamento_id    BIGINT,
+    CONSTRAINT fk_resposta_pergunta  FOREIGN KEY (pergunta_id)  REFERENCES pergunta_servico(id),
+    CONSTRAINT fk_resposta_orcamento FOREIGN KEY (orcamento_id) REFERENCES orcamento(id)
 );
 
 -- =========================
--- ORCAMENTO
+-- TABELA RESULTADO_EXAME
+-- Corresponde a: model/ResultadoExame.java
 -- =========================
-CREATE TABLE orcamento (
-                           orcamento_id SERIAL PRIMARY KEY,
-                           pessoa_id INTEGER,
-                           data_solicitacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                           status VARCHAR(20) DEFAULT 'pendente',
-                           CONSTRAINT fk_orcamento_pessoa
-                               FOREIGN KEY (pessoa_id) REFERENCES pessoa(pessoa_id)
+CREATE TABLE IF NOT EXISTS resultado_exame (
+    id              BIGSERIAL PRIMARY KEY,
+    data_exame      DATE,
+    arquivo         VARCHAR(255),
+    descricao       TEXT,
+    status          VARCHAR(50),
+    pessoa_id       BIGINT,
+    orcamento_id    BIGINT,
+    CONSTRAINT fk_resultado_pessoa   FOREIGN KEY (pessoa_id)   REFERENCES pessoa(id),
+    CONSTRAINT fk_resultado_orcamento FOREIGN KEY (orcamento_id) REFERENCES orcamento(id)
 );
 
--- =========================
--- RESPOSTAS DO ORCAMENTO
--- =========================
-CREATE TABLE resposta_orcamento (
-                                    resposta_id SERIAL PRIMARY KEY,
-                                    resposta TEXT,
-                                    orcamento_id INTEGER,
-                                    pergunta_id INTEGER,
-                                    CONSTRAINT fk_resposta_orcamento
-                                        FOREIGN KEY (orcamento_id) REFERENCES orcamento(orcamento_id),
-                                    CONSTRAINT fk_resposta_pergunta
-                                        FOREIGN KEY (pergunta_id) REFERENCES pergunta_servico(pergunta_id)
-);
+-- =============================================================
+-- DADOS INICIAIS (equivalente ao DataInitializer.java)
+-- Executar apenas se o banco estiver vazio.
+-- Na prática, o Spring Boot DataInitializer já faz isso via JPA.
+-- =============================================================
 
--- =========================
--- RESULTADO EXAMES
--- =========================
-CREATE TABLE resultado_exames (
-                                  resultado_id SERIAL PRIMARY KEY,
-                                  pessoa_id INTEGER,
-                                  nome_exame VARCHAR(150),
-                                  descricao TEXT,
-                                  data_exame DATE,
-                                  arquivo VARCHAR(255),
-                                  status VARCHAR(20) DEFAULT 'ativo',
-                                  CONSTRAINT fk_resultado_pessoa
-                                      FOREIGN KEY (pessoa_id) REFERENCES pessoa(pessoa_id)
-);
+-- Usuários de exemplo:
+-- admin / admin123 (ROLE_ADMIN)
+-- user  / user123  (ROLE_USER)
+
+-- Serviços de exemplo com perguntas (inseridos pelo DataInitializer.java):
+-- 1. Análise Microbiológica de Água   - R$ 350,00
+-- 2. Análise de Solo Agrícola         - R$ 280,00
+-- 3. Análise de Alimentos             - R$ 420,00

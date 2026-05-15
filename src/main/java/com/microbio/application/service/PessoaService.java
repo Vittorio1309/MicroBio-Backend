@@ -35,11 +35,12 @@ public class PessoaService {
     }
 
     public PessoaDTO create(PessoaCreateDTO dto) {
-        if (repository.existsByEmail(dto.email())) {
-            throw new BusinessException("Já existe uma pessoa cadastrada com o email: " + dto.email());
-        }
-        Pessoa pessoa = new Pessoa(dto.nome(), dto.email(), dto.telefone());
-        return toDTO(repository.save(pessoa));
+        return repository.findByEmail(dto.email())
+                .map(this::toDTO)
+                .orElseGet(() -> {
+                    Pessoa pessoa = new Pessoa(dto.nome(), dto.email(), dto.telefone());
+                    return toDTO(repository.save(pessoa));
+                });
     }
 
     public PessoaDTO update(Long id, PessoaUpdate dto) {
