@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface OrcamentoRepository extends JpaRepository<Orcamento, Long> {
@@ -24,4 +25,6 @@ public interface OrcamentoRepository extends JpaRepository<Orcamento, Long> {
     List<Orcamento> findRecentesComDetalhes(Pageable pageable);
 
     Page<Orcamento> findAll(Pageable pageable);
+
+    Optional<Orcamento> findFirstByPessoaIdAndServicoIdOrderByDataCriacaoDesc(Long pessoaId, Long servicoId);
 }

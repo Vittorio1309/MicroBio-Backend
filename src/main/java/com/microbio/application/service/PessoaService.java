@@ -7,6 +7,7 @@ import com.microbio.application.exception.BusinessException;
 import com.microbio.application.exception.ResourceNotFoundException;
 import com.microbio.application.model.Pessoa;
 import com.microbio.application.repository.PessoaRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,9 +18,11 @@ import java.util.List;
 public class PessoaService {
 
     private final PessoaRepository repository;
+    private final PasswordEncoder passwordEncoder;
 
-    public PessoaService(PessoaRepository repository) {
+    public PessoaService(PessoaRepository repository, PasswordEncoder passwordEncoder) {
         this.repository = repository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional(readOnly = true)
@@ -35,12 +38,12 @@ public class PessoaService {
     }
 
     public PessoaDTO create(PessoaCreateDTO dto) {
-        return repository.findByEmail(dto.email())
-                .map(this::toDTO)
-                .orElseGet(() -> {
-                    Pessoa pessoa = new Pessoa(dto.nome(), dto.email(), dto.telefone());
-                    return toDTO(repository.save(pessoa));
-                });
+        if (repository.existsByEmail(dto.email())) {
+            throw new BusinessException("Já existe um cliente cadastrado com o email: " + dto.email());
+        }
+
+        Pessoa pessoa = new Pessoa(dto.nome(), dto.email(), passwordEncoder.encode(dto.senha()), dto.telefone());
+        return toDTO(repository.save(pessoa));
     }
 
     public PessoaDTO update(Long id, PessoaUpdate dto) {
@@ -48,12 +51,13 @@ public class PessoaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Pessoa", id));
 
         if (dto.email() != null && !dto.email().equals(pessoa.getEmail()) && repository.existsByEmail(dto.email())) {
-            throw new BusinessException("Já existe uma pessoa cadastrada com o email: " + dto.email());
+            throw new BusinessException("Já existe um cliente cadastrado com o email: " + dto.email());
         }
 
         if (dto.nome() != null) pessoa.setNome(dto.nome());
         if (dto.email() != null) pessoa.setEmail(dto.email());
         if (dto.telefone() != null) pessoa.setTelefone(dto.telefone());
+        if (dto.senha() != null && !dto.senha().isBlank()) pessoa.setSenha(passwordEncoder.encode(dto.senha()));
 
         return toDTO(repository.save(pessoa));
     }

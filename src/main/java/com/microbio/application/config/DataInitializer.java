@@ -23,7 +23,7 @@ public class DataInitializer {
             // Pessoa de exemplo
             Pessoa pessoaExemplo = null;
             if (pessoaRepository.count() == 0) {
-                pessoaExemplo = pessoaRepository.save(new Pessoa("Cliente Exemplo", "cliente@microbio.com.br", "(41) 99999-0000"));
+                pessoaExemplo = pessoaRepository.save(new Pessoa("Cliente Exemplo", "cliente@microbio.com.br", passwordEncoder.encode("cliente123"), "(41) 99999-0000"));
                 System.out.println("✓ Pessoa de exemplo criada");
             } else {
                 pessoaExemplo = pessoaRepository.findAll().get(0);

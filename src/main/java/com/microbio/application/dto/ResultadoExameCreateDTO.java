@@ -4,5 +4,6 @@ public record ResultadoExameCreateDTO(
     String descricao,
     String laudo,
     String arquivoUrl,
-    Long orcamentoId
+    Long pessoaId,
+    Long servicoId
 ) {}

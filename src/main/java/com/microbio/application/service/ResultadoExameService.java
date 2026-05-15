@@ -2,6 +2,8 @@ package com.microbio.application.service;
 
 import com.microbio.application.dto.ResultadoExameCreateDTO;
 import com.microbio.application.dto.ResultadoExameDTO;
+import com.microbio.application.dto.ResultadoExameUpdateDTO;
+import com.microbio.application.exception.BusinessException;
 import com.microbio.application.exception.ResourceNotFoundException;
 import com.microbio.application.model.Orcamento;
 import com.microbio.application.model.ResultadoExame;
@@ -48,8 +50,11 @@ public class ResultadoExameService {
     }
 
     public ResultadoExameDTO create(ResultadoExameCreateDTO dto) {
-        Orcamento orcamento = orcamentoRepository.findById(dto.orcamentoId())
-                .orElseThrow(() -> new ResourceNotFoundException("Orçamento", dto.orcamentoId()));
+        Orcamento orcamento = orcamentoRepository
+                .findFirstByPessoaIdAndServicoIdOrderByDataCriacaoDesc(dto.pessoaId(), dto.servicoId())
+                .orElseThrow(() -> new BusinessException(
+                        "Nenhum orçamento encontrado para o cliente " + dto.pessoaId()
+                        + " e serviço " + dto.servicoId()));
 
         ResultadoExame resultado = new ResultadoExame();
         resultado.setDescricao(dto.descricao());
@@ -57,6 +62,17 @@ public class ResultadoExameService {
         resultado.setLaudo(dto.laudo());
         resultado.setArquivoUrl(dto.arquivoUrl());
         resultado.setOrcamento(orcamento);
+
+        return toDTO(repository.save(resultado));
+    }
+
+    public ResultadoExameDTO update(Long id, ResultadoExameUpdateDTO dto) {
+        ResultadoExame resultado = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Resultado de Exame", id));
+
+        if (dto.descricao() != null) resultado.setDescricao(dto.descricao());
+        if (dto.laudo() != null) resultado.setLaudo(dto.laudo());
+        if (dto.arquivoUrl() != null) resultado.setArquivoUrl(dto.arquivoUrl());
 
         return toDTO(repository.save(resultado));
     }

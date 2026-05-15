@@ -28,6 +28,8 @@ public class Pessoa {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(nullable = false)
+    private String senha;
 
     private String telefone;
 
@@ -35,9 +37,10 @@ public class Pessoa {
     @OneToMany(mappedBy = "pessoa", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Orcamento> orcamentos = new ArrayList<>();
 
-    public Pessoa(String nome, String email, String telefone) {
+    public Pessoa(String nome, String email, String senha, String telefone) {
         this.nome = nome;
         this.email = email;
+        this.senha = senha;
         this.telefone = telefone;
     }
 }

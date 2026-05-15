@@ -2,6 +2,7 @@ package com.microbio.application.controller;
 
 import com.microbio.application.dto.ResultadoExameCreateDTO;
 import com.microbio.application.dto.ResultadoExameDTO;
+import com.microbio.application.dto.ResultadoExameUpdateDTO;
 import com.microbio.application.service.ResultadoExameService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -53,6 +54,13 @@ public class ResultadoExameController {
     @Operation(summary = "Cadastrar resultado de exame (Admin)")
     public ResponseEntity<ResultadoExameDTO> create(@RequestBody ResultadoExameCreateDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.create(dto));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Atualizar resultado de exame (Admin)")
+    public ResponseEntity<ResultadoExameDTO> update(@PathVariable Long id, @RequestBody ResultadoExameUpdateDTO dto) {
+        return ResponseEntity.ok(service.update(id, dto));
     }
 
     @DeleteMapping("/{id}")
