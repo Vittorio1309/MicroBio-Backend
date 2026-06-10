@@ -27,10 +27,13 @@ public class ResultadoExame {
     @Column(columnDefinition = "TEXT")
     private String laudo;
 
-    @Column(nullable = false)
     private String arquivoUrl;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ResultadoExameStatus status;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "orcamento_id", nullable = false)
-    private Orcamento orcamento;
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private Usuario usuario;
 }

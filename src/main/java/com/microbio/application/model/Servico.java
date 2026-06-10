@@ -2,7 +2,6 @@ package com.microbio.application.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,9 +27,10 @@ public class Servico {
 
     private String descricao;
 
-    @Positive
-    @Column(nullable = false)
     private BigDecimal preco;
+
+    @Column
+    private String tipo;
 
     @OneToMany(mappedBy = "servico", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Orcamento> orcamentos = new ArrayList<>();

@@ -37,21 +37,21 @@ public class ServicoController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_MASTER')")
     @Operation(summary = "Cadastrar novo serviço (Admin)")
     public ResponseEntity<ServicoDTO> create(@RequestBody ServicoCreateDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.create(dto));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_MASTER')")
     @Operation(summary = "Atualizar serviço (Admin)")
     public ResponseEntity<ServicoDTO> update(@PathVariable Long id, @RequestBody ServicoUpdateDTO dto) {
         return ResponseEntity.ok(service.update(id, dto));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_MASTER')")
     @Operation(summary = "Remover serviço (Admin)")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);

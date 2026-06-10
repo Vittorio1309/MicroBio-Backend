@@ -1,6 +1,7 @@
 -- =========================
 -- TABELA PESSOA
 -- Corresponde a: model/Pessoa.java
+-- Sem coluna senha — autenticação é feita via tabela usuario
 -- =========================
 CREATE TABLE IF NOT EXISTS pessoa (
     id          BIGSERIAL PRIMARY KEY,
@@ -12,6 +13,7 @@ CREATE TABLE IF NOT EXISTS pessoa (
 -- =========================
 -- TABELA USUARIO
 -- Corresponde a: model/Usuario.java
+-- role armazenado SEM prefixo "ROLE_" (CustomUserDetailsService adiciona)
 -- =========================
 CREATE TABLE IF NOT EXISTS usuario (
     id          BIGSERIAL PRIMARY KEY,
@@ -63,8 +65,6 @@ CREATE TABLE IF NOT EXISTS orcamento (
 
 -- =========================
 -- TABELA RESPOSTA_ORCAMENTO
--- Corresponde a: model/RespostaOrcamento.java
--- Os dados do formulário (perguntas + respostas) são salvos aqui.
 -- =========================
 CREATE TABLE IF NOT EXISTS resposta_orcamento (
     id              BIGSERIAL PRIMARY KEY,
@@ -77,7 +77,6 @@ CREATE TABLE IF NOT EXISTS resposta_orcamento (
 
 -- =========================
 -- TABELA RESULTADO_EXAME
--- Corresponde a: model/ResultadoExame.java
 -- =========================
 CREATE TABLE IF NOT EXISTS resultado_exame (
     id              BIGSERIAL PRIMARY KEY,
@@ -87,21 +86,21 @@ CREATE TABLE IF NOT EXISTS resultado_exame (
     status          VARCHAR(50),
     pessoa_id       BIGINT,
     orcamento_id    BIGINT,
-    CONSTRAINT fk_resultado_pessoa   FOREIGN KEY (pessoa_id)   REFERENCES pessoa(id),
+    CONSTRAINT fk_resultado_pessoa    FOREIGN KEY (pessoa_id)   REFERENCES pessoa(id),
     CONSTRAINT fk_resultado_orcamento FOREIGN KEY (orcamento_id) REFERENCES orcamento(id)
 );
 
 -- =============================================================
--- DADOS INICIAIS (equivalente ao DataInitializer.java)
--- Executar apenas se o banco estiver vazio.
--- Na prática, o Spring Boot DataInitializer já faz isso via JPA.
+-- DADOS INICIAIS
+-- O DataInitializer.java insere esses registros automaticamente
+-- na primeira inicialização se as tabelas estiverem vazias.
+--
+-- Usuários pré-definidos (senhas codificadas via BCrypt):
+--   admin / admin123  →  role = ADMIN
+--   user  / user123   →  role = USER
+--
+-- Exemplo de inserção manual (BCrypt de "admin123"):
+-- INSERT INTO usuario (username, senha, role)
+--   VALUES ('admin', '$2a$10$...hash...', 'ADMIN')
+--   ON CONFLICT (username) DO NOTHING;
 -- =============================================================
-
--- Usuários de exemplo:
--- admin / admin123 (ROLE_ADMIN)
--- user  / user123  (ROLE_USER)
-
--- Serviços de exemplo com perguntas (inseridos pelo DataInitializer.java):
--- 1. Análise Microbiológica de Água   - R$ 350,00
--- 2. Análise de Solo Agrícola         - R$ 280,00
--- 3. Análise de Alimentos             - R$ 420,00

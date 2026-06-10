@@ -2,11 +2,15 @@ package com.microbio.application.controller;
 
 import com.microbio.application.dto.OrcamentoCreateDTO;
 import com.microbio.application.dto.OrcamentoDTO;
+import com.microbio.application.dto.OrcamentoStatusUpdateDTO;
 import com.microbio.application.dto.OrcamentoUpdateDTO;
 import com.microbio.application.dto.MeusPedidosDTO;
+import com.microbio.application.dto.ObservacaoOrcamentoDTO;
+import com.microbio.application.dto.ObservacaoOrcamentoCreateDTO;
 import com.microbio.application.exception.BusinessException;
 import com.microbio.application.model.OrcamentoStatus;
 import com.microbio.application.repository.UsuarioRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.microbio.application.service.OrcamentoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -69,6 +74,43 @@ public class OrcamentoController {
     @Operation(summary = "Atualizar status/dados do orçamento")
     public ResponseEntity<OrcamentoDTO> update(@PathVariable Long id, @RequestBody OrcamentoUpdateDTO dto) {
         return ResponseEntity.ok(service.updateStatus(id, dto));
+    }
+
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_MASTER')")
+    @Operation(summary = "Atualizar apenas o status do orçamento (Admin)")
+    public ResponseEntity<OrcamentoDTO> patchStatus(
+            @PathVariable Long id,
+            @RequestBody OrcamentoStatusUpdateDTO dto) {
+        return ResponseEntity.ok(service.updateStatus(id, new OrcamentoUpdateDTO(dto.status(), null, null, null)));
+    }
+
+    @GetMapping("/{id}/observacoes")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_MASTER')")
+    @Operation(summary = "Listar observações de um orçamento (Admin)")
+    public ResponseEntity<List<ObservacaoOrcamentoDTO>> getObservacoes(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getObservacoes(id));
+    }
+
+    @PostMapping("/{id}/observacoes")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_MASTER')")
+    @Operation(summary = "Adicionar observação a um orçamento (Admin)")
+    public ResponseEntity<ObservacaoOrcamentoDTO> addObservacao(
+            @PathVariable Long id,
+            @Valid @RequestBody ObservacaoOrcamentoCreateDTO dto,
+            Authentication authentication) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(service.addObservacao(id, dto, authentication.getName()));
+    }
+
+    @PatchMapping("/{id}/responsavel")
+    @PreAuthorize("hasRole('ADMIN_MASTER')")
+    @Operation(summary = "Transferir responsável do orçamento (Master)")
+    public ResponseEntity<OrcamentoDTO> transferirResponsavel(
+            @PathVariable Long id,
+            @RequestBody com.microbio.application.dto.ResponsavelUpdateDTO dto,
+            Authentication authentication) {
+        return ResponseEntity.ok(service.transferirResponsavel(id, dto.responsavelId(), authentication.getName()));
     }
 
     @DeleteMapping("/{id}")

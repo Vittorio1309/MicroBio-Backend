@@ -36,21 +36,21 @@ public class PerguntaServicoController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_MASTER')")
     @Operation(summary = "Criar pergunta para um serviço (Admin)")
     public ResponseEntity<PerguntaServicoDTO> create(@RequestBody PerguntaServicoCreateDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.create(dto));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_MASTER')")
     @Operation(summary = "Atualizar pergunta (Admin)")
     public ResponseEntity<PerguntaServicoDTO> update(@PathVariable Long id, @RequestBody PerguntaServicoCreateDTO dto) {
         return ResponseEntity.ok(service.update(id, dto));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_MASTER')")
     @Operation(summary = "Remover pergunta (Admin)")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);

@@ -8,6 +8,7 @@ import com.microbio.application.model.Usuario;
 import com.microbio.application.repository.PessoaRepository;
 import com.microbio.application.repository.UsuarioRepository;
 import com.microbio.application.security.JwtUtil;
+import com.microbio.application.service.AuditLogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
@@ -30,15 +31,18 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final UsuarioRepository usuarioRepository;
     private final PessoaRepository pessoaRepository;
+    private final AuditLogService auditLogService;
 
     public AuthController(AuthenticationManager authenticationManager,
                           JwtUtil jwtUtil,
                           UsuarioRepository usuarioRepository,
-                          PessoaRepository pessoaRepository) {
+                          PessoaRepository pessoaRepository,
+                          AuditLogService auditLogService) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.usuarioRepository = usuarioRepository;
         this.pessoaRepository = pessoaRepository;
+        this.auditLogService = auditLogService;
     }
 
     @PostMapping("/login")
@@ -58,6 +62,9 @@ public class AuthController {
                     .map(GrantedAuthority::getAuthority)
                     .findFirst()
                     .orElse("ROLE_USER");
+
+            String roleName = role.startsWith("ROLE_") ? role.substring(5) : role;
+            auditLogService.log(userDetails.getUsername(), roleName, "LOGIN", "Usuario", userDetails.getUsername(), "Login realizado com sucesso");
 
             return ResponseEntity.ok(new AuthResponse(true, "Login realizado com sucesso", userDetails.getUsername(), token, role));
 
@@ -103,6 +110,23 @@ public class AuthController {
         usuario.setPessoaId(pessoaId);
         usuarioRepository.save(usuario);
 
+        auditLogService.log(username, usuario.getRole(), "VINCULAR_PESSOA", "Usuario", username, "Usuário vinculado à Pessoa ID: " + pessoaId);
+
         return ResponseEntity.ok(new AuthResponse(true, "Pessoa vinculada com sucesso", username, null, usuario.getRole()));
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "Registrar evento de logout")
+    public ResponseEntity<Void> logout(Authentication authentication) {
+        if (authentication != null && authentication.isAuthenticated()) {
+            String username = authentication.getName();
+            String role = authentication.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .findFirst()
+                    .orElse("USER");
+            String roleName = role.startsWith("ROLE_") ? role.substring(5) : role;
+            auditLogService.log(username, roleName, "LOGOUT", "Usuario", username, "Logout realizado com sucesso");
+        }
+        return ResponseEntity.ok().build();
     }
 }

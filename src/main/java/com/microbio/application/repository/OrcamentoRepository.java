@@ -27,4 +27,6 @@ public interface OrcamentoRepository extends JpaRepository<Orcamento, Long> {
     Page<Orcamento> findAll(Pageable pageable);
 
     Optional<Orcamento> findFirstByPessoaIdAndServicoIdOrderByDataCriacaoDesc(Long pessoaId, Long servicoId);
+
+    Optional<Orcamento> findFirstByPessoaIdOrderByDataCriacaoDesc(Long pessoaId);
 }

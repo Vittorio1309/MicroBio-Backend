@@ -2,31 +2,25 @@ package com.microbio.application.service;
 
 import com.microbio.application.dto.EstatisticasDTO;
 import com.microbio.application.dto.ResultadoDashboardDTO;
-import com.microbio.application.model.Orcamento;
-import com.microbio.application.model.OrcamentoStatus;
-import com.microbio.application.model.Pessoa;
-import com.microbio.application.model.Servico;
-import com.microbio.application.repository.OrcamentoRepository;
+import com.microbio.application.model.ResultadoExame;
+import com.microbio.application.model.ResultadoExameStatus;
+import com.microbio.application.model.Usuario;
 import com.microbio.application.repository.ResultadoExameRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Pageable;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class DashboardServiceTest {
 
-    @Mock OrcamentoRepository orcamentoRepository;
     @Mock ResultadoExameRepository resultadoExameRepository;
 
     @InjectMocks
@@ -34,77 +28,65 @@ class DashboardServiceTest {
 
     @Test
     void getEstatisticas_returnsCorrectCounts() {
-        when(orcamentoRepository.count()).thenReturn(15L);
-        when(orcamentoRepository.countByStatus(OrcamentoStatus.PENDENTE)).thenReturn(5L);
-        when(orcamentoRepository.countByStatus(OrcamentoStatus.FINALIZADO)).thenReturn(8L);
+        when(resultadoExameRepository.count()).thenReturn(15L);
+        when(resultadoExameRepository.countByStatus(ResultadoExameStatus.PENDENTE)).thenReturn(5L);
+        when(resultadoExameRepository.countByStatus(ResultadoExameStatus.VISUALIZADO)).thenReturn(10L);
 
         EstatisticasDTO stats = service.getEstatisticas();
 
-        assertThat(stats.totalOrcamentos()).isEqualTo(15L);
-        assertThat(stats.totalPendente()).isEqualTo(5L);
-        assertThat(stats.totalFinalizado()).isEqualTo(8L);
+        assertThat(stats.totalAnalises()).isEqualTo(15L);
+        assertThat(stats.totalEmAndamento()).isEqualTo(5L);
+        assertThat(stats.totalFinalizadas()).isEqualTo(10L);
     }
 
     @Test
     void getEstatisticas_usesCountByStatusNotFindAll() {
-        when(orcamentoRepository.count()).thenReturn(0L);
-        when(orcamentoRepository.countByStatus(any())).thenReturn(0L);
+        when(resultadoExameRepository.count()).thenReturn(0L);
+        when(resultadoExameRepository.countByStatus(any())).thenReturn(0L);
 
         service.getEstatisticas();
 
-        verify(orcamentoRepository, never()).findAll();
-        verify(orcamentoRepository, never()).findByStatus(any());
+        verify(resultadoExameRepository, never()).findAll();
     }
 
     @Test
     void getResultadosRecentes_returnsMappedList() {
-        Orcamento o1 = orcamento(1L);
-        Orcamento o2 = orcamento(2L);
-        when(orcamentoRepository.findRecentesComDetalhes(any(Pageable.class))).thenReturn(List.of(o1, o2));
-        when(resultadoExameRepository.existsByOrcamentoId(1L)).thenReturn(true);
-        when(resultadoExameRepository.existsByOrcamentoId(2L)).thenReturn(false);
+        ResultadoExame r1 = resultado(1L, "Análise de solo", ResultadoExameStatus.EM_ANDAMENTO);
+        ResultadoExame r2 = resultado(2L, "Análise foliar", ResultadoExameStatus.FINALIZADO);
+        when(resultadoExameRepository.findTop10ByOrderByDataEmissaoDesc()).thenReturn(List.of(r1, r2));
 
         List<ResultadoDashboardDTO> result = service.getResultadosRecentes();
 
         assertThat(result).hasSize(2);
-        assertThat(result.get(0).orcamentoId()).isEqualTo(1L);
-        assertThat(result.get(0).temResultadoExame()).isTrue();
-        assertThat(result.get(1).temResultadoExame()).isFalse();
+        assertThat(result.get(0).id()).isEqualTo(1L);
+        assertThat(result.get(0).descricao()).isEqualTo("Análise de solo");
+        assertThat(result.get(0).status()).isEqualTo(ResultadoExameStatus.EM_ANDAMENTO);
+        assertThat(result.get(1).status()).isEqualTo(ResultadoExameStatus.FINALIZADO);
     }
 
     @Test
-    void getResultadosRecentes_requestsExactly10Records() {
-        when(orcamentoRepository.findRecentesComDetalhes(any(Pageable.class))).thenReturn(List.of());
+    void getResultadosRecentes_usesTop10Query() {
+        when(resultadoExameRepository.findTop10ByOrderByDataEmissaoDesc()).thenReturn(List.of());
 
         service.getResultadosRecentes();
 
-        verify(orcamentoRepository).findRecentesComDetalhes(argThat(p -> p.getPageSize() == 10));
+        verify(resultadoExameRepository).findTop10ByOrderByDataEmissaoDesc();
+        verify(resultadoExameRepository, never()).findAll();
     }
 
-    @Test
-    void getResultadosRecentes_doesNotLoadAllOrcamentos() {
-        when(orcamentoRepository.findRecentesComDetalhes(any(Pageable.class))).thenReturn(List.of());
+    private ResultadoExame resultado(Long id, String descricao, ResultadoExameStatus status) {
+        Usuario usuario = new Usuario();
+        usuario.setId(1L);
+        usuario.setUsername("cliente_teste");
+        usuario.setSenha("hash");
+        usuario.setRole("USER");
 
-        service.getResultadosRecentes();
-
-        verify(orcamentoRepository, never()).findAll();
-    }
-
-    private Orcamento orcamento(Long id) {
-        Pessoa pessoa = new Pessoa("Cliente Teste", "cliente@ex.com", "11999");
-        pessoa.setId(1L);
-
-        Servico servico = new Servico();
-        servico.setId(1L);
-        servico.setNome("Análise de Água");
-        servico.setPreco(BigDecimal.valueOf(350));
-
-        Orcamento o = new Orcamento();
-        o.setId(id);
-        o.setDataCriacao(LocalDateTime.now());
-        o.setStatus(OrcamentoStatus.PENDENTE);
-        o.setPessoa(pessoa);
-        o.setServico(servico);
-        return o;
+        ResultadoExame r = new ResultadoExame();
+        r.setId(id);
+        r.setDescricao(descricao);
+        r.setDataEmissao(LocalDateTime.now());
+        r.setStatus(status);
+        r.setUsuario(usuario);
+        return r;
     }
 }

@@ -35,6 +35,10 @@ class OrcamentoServiceTest {
     @Mock ServicoRepository servicoRepository;
     @Mock PerguntaServicoRepository perguntaRepository;
     @Mock RespostaOrcamentoRepository respostaRepository;
+    @Mock ObservacaoOrcamentoRepository observacaoRepository;
+    @Mock UsuarioRepository usuarioRepository;
+    @Mock AuditLogService auditLogService;
+    @Mock HistoricoResponsavelRepository historicoResponsavelRepository;
 
     @InjectMocks
     OrcamentoService service;
@@ -181,6 +185,37 @@ class OrcamentoServiceTest {
 
         assertThat(result).isEmpty();
         verify(orcamentoRepository).findByPessoaIdAndStatus(1L, OrcamentoStatus.ACEITO);
+    }
+
+    @Test
+    void transferirResponsavel_whenExecutorIsMaster_updatesResponsavel() {
+        Orcamento o = orcamento(1L, OrcamentoStatus.PENDENTE);
+        Usuario executor = new Usuario("master", "encoded", "ADMIN_MASTER");
+        Usuario novo = new Usuario("new_admin", "encoded", "ADMIN");
+
+        when(orcamentoRepository.findById(1L)).thenReturn(Optional.of(o));
+        when(usuarioRepository.findByUsername("master")).thenReturn(Optional.of(executor));
+        when(usuarioRepository.findById(2L)).thenReturn(Optional.of(novo));
+        when(orcamentoRepository.save(any(Orcamento.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        OrcamentoDTO result = service.transferirResponsavel(1L, 2L, "master");
+
+        assertThat(result.responsavelNome()).isEqualTo("new_admin");
+        verify(historicoResponsavelRepository).save(any(HistoricoResponsavel.class));
+        verify(auditLogService).log(eq("master"), eq("ADMIN_MASTER"), eq("TRANSFERENCIA_RESPONSAVEL"), eq("Orcamento"), eq("1"), anyString());
+    }
+
+    @Test
+    void transferirResponsavel_whenExecutorIsNotMaster_throwsBusinessException() {
+        Orcamento o = orcamento(1L, OrcamentoStatus.PENDENTE);
+        Usuario executor = new Usuario("regular_admin", "encoded", "ADMIN");
+
+        when(orcamentoRepository.findById(1L)).thenReturn(Optional.of(o));
+        when(usuarioRepository.findByUsername("regular_admin")).thenReturn(Optional.of(executor));
+
+        assertThatThrownBy(() -> service.transferirResponsavel(1L, 2L, "regular_admin"))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("Apenas administradores Master podem transferir responsáveis.");
     }
 
     private Orcamento orcamento(Long id, OrcamentoStatus status) {

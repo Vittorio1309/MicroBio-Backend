@@ -8,6 +8,7 @@ import java.util.List;
 public record OrcamentoDTO(
     Long id,
     LocalDateTime dataCriacao,
+    LocalDateTime dataMovimentacao,
     OrcamentoStatus status,
     String observacao,
     BigDecimal valorTotal,
@@ -15,5 +16,8 @@ public record OrcamentoDTO(
     String pessoaNome,
     Long servicoId,
     String servicoNome,
+    Long responsavelId,
+    String responsavelNome,
+    LocalDateTime dataAtribuicao,
     List<RespostaDTO> respostas
 ) {}

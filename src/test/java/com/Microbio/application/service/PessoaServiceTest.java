@@ -27,6 +27,12 @@ class PessoaServiceTest {
     @Mock
     private PessoaRepository repository;
 
+    @Mock
+    private com.microbio.application.repository.OrcamentoRepository orcamentoRepository;
+
+    @Mock
+    private AuditLogService auditLogService;
+
     @InjectMocks
     private PessoaService service;
 

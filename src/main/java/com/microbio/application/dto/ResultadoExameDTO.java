@@ -1,5 +1,6 @@
 package com.microbio.application.dto;
 
+import com.microbio.application.model.ResultadoExameStatus;
 import java.time.LocalDateTime;
 
 public record ResultadoExameDTO(
@@ -8,5 +9,7 @@ public record ResultadoExameDTO(
     LocalDateTime dataEmissao,
     String laudo,
     String arquivoUrl,
-    Long orcamentoId
+    Long usuarioId,
+    String username,
+    ResultadoExameStatus status
 ) {}

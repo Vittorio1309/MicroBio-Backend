@@ -24,6 +24,8 @@ public class Orcamento {
     @Column(nullable = false)
     private LocalDateTime dataCriacao;
 
+    private LocalDateTime dataMovimentacao;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OrcamentoStatus status;
@@ -40,9 +42,12 @@ public class Orcamento {
     @JoinColumn(name = "servico_id", nullable = false)
     private Servico servico;
 
-    @OneToMany(mappedBy = "orcamento", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<RespostaOrcamento> respostas = new ArrayList<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "responsavel_id")
+    private Usuario responsavel;
+
+    private LocalDateTime dataAtribuicao;
 
     @OneToMany(mappedBy = "orcamento", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<ResultadoExame> resultados = new ArrayList<>();
+    private List<RespostaOrcamento> respostas = new ArrayList<>();
 }

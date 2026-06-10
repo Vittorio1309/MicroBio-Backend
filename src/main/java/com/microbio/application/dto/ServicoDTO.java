@@ -8,5 +8,6 @@ public record ServicoDTO(
     String nome,
     String descricao,
     BigDecimal preco,
+    String tipo,
     List<PerguntaServicoDTO> perguntas
 ) {}
