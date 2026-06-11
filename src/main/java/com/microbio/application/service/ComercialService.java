@@ -33,10 +33,6 @@ public class ComercialService {
         
         List<Orcamento> orcamentos;
         if ("ADMIN".equals(role)) {
-            orcamentos = allOrcamentos.stream()
-                    .filter(o -> o.getResponsavel() != null && username.equals(o.getResponsavel().getUsername()))
-                    .toList();
-        } else if ("ADMIN_MASTER".equals(role)) {
             if (responsavelId != null) {
                 orcamentos = allOrcamentos.stream()
                         .filter(o -> o.getResponsavel() != null && responsavelId.equals(o.getResponsavel().getId()))
@@ -58,6 +54,8 @@ public class ComercialService {
         long countConvertedWithDuration = 0;
         BigDecimal valorPotencial = BigDecimal.ZERO;
         BigDecimal valorEmRisco = BigDecimal.ZERO;
+        BigDecimal valorConvertido = BigDecimal.ZERO;
+        BigDecimal valorPerdido = BigDecimal.ZERO;
 
         // Buscar prazo configurado
         String prazoStr = configuracaoService.getValor("prazo_acompanhamento_orcamentos", "48 horas");
@@ -75,6 +73,7 @@ public class ComercialService {
             if (status == OrcamentoStatus.FINALIZADO) {
                 leadsConcluidos++;
                 leadsConvertidos++;
+                valorConvertido = valorConvertido.add(preco);
                 LocalDateTime end = o.getDataMovimentacao() != null ? o.getDataMovimentacao() : criacao;
                 long diffMinutes = Duration.between(criacao, end).toMinutes();
                 if (diffMinutes > 0) {
@@ -94,9 +93,9 @@ public class ComercialService {
             } else if (status == OrcamentoStatus.REJEITADO) {
                 leadsRejeitados++;
                 leadsPerdidos++;
+                valorPerdido = valorPerdido.add(preco);
             } else if (status == OrcamentoStatus.PENDENTE) {
                 leadsPendentes++;
-                valorPotencial = valorPotencial.add(preco);
                 LocalDateTime lastMove = o.getDataMovimentacao() != null ? o.getDataMovimentacao() : criacao;
                 if (lastMove.isBefore(limitTime)) {
                     orcamentosAtrasados++;
@@ -129,7 +128,9 @@ public class ComercialService {
                 leadsConcluidos,
                 leadsEmAberto,
                 valorPotencial,
-                valorEmRisco
+                valorEmRisco,
+                valorConvertido,
+                valorPerdido
         );
     }
 
@@ -137,7 +138,7 @@ public class ComercialService {
             String periodo, java.time.LocalDate inicio, java.time.LocalDate fim) {
         
         List<Orcamento> orcamentos = orcamentoRepository.findAll();
-        List<com.microbio.application.model.Usuario> admins = usuarioRepository.findByRoleIn(List.of("ADMIN", "ADMIN_MASTER"));
+        List<com.microbio.application.model.Usuario> admins = usuarioRepository.findByRole("ADMIN");
         
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime start = null;

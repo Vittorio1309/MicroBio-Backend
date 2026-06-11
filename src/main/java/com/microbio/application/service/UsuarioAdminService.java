@@ -44,17 +44,6 @@ public class UsuarioAdminService {
         return repository.findByRole(role).stream().map(this::toDTO).toList();
     }
 
-    private boolean isExecutorMaster() {
-        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal().toString())) {
-            return false;
-        }
-        String currentUsername = auth.getName();
-        return repository.findByUsername(currentUsername)
-                .map(u -> "ADMIN_MASTER".equals(u.getRole()))
-                .orElse(false);
-    }
-
     public UsuarioResponseDTO create(UsuarioCreateDTO dto) {
         if (repository.findByUsername(dto.username()).isPresent()) {
             throw new BusinessException("Já existe um usuário com o username: " + dto.username());
@@ -63,10 +52,6 @@ public class UsuarioAdminService {
         String role = dto.role() != null && !dto.role().isBlank() ? dto.role() : "USER";
         if (role.startsWith("ROLE_")) {
             role = role.substring(5);
-        }
-
-        if (("ADMIN".equals(role) || "ADMIN_MASTER".equals(role)) && !isExecutorMaster()) {
-            throw new BusinessException("Apenas administradores Master podem gerenciar contas administrativas.");
         }
 
         Usuario usuario = new Usuario();
@@ -84,10 +69,6 @@ public class UsuarioAdminService {
     public UsuarioResponseDTO update(Long id, UsuarioUpdateDTO dto) {
         Usuario usuario = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário", id));
-
-        if (("ADMIN".equals(usuario.getRole()) || "ADMIN_MASTER".equals(usuario.getRole())) && !isExecutorMaster()) {
-            throw new BusinessException("Apenas administradores Master podem atualizar contas administrativas.");
-        }
 
         if (dto.username() != null && !dto.username().isBlank()) {
             repository.findByUsername(dto.username())
@@ -110,10 +91,6 @@ public class UsuarioAdminService {
         Usuario usuario = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário", id));
 
-        if (("ADMIN".equals(usuario.getRole()) || "ADMIN_MASTER".equals(usuario.getRole())) && !isExecutorMaster()) {
-            throw new BusinessException("Apenas administradores Master podem excluir contas administrativas.");
-        }
-
         repository.deleteById(id);
         auditLogService.log("EXCLUSAO_USUARIO", "Usuario", id.toString(),
                 "Usuário '" + usuario.getUsername() + "' excluído");
@@ -121,7 +98,7 @@ public class UsuarioAdminService {
 
     @Transactional(readOnly = true)
     public List<UsuarioResponseDTO> findAdministradores() {
-        return repository.findByRoleIn(List.of("ADMIN", "ADMIN_MASTER"))
+        return repository.findByRole("ADMIN")
                 .stream()
                 .map(this::toDTO)
                 .toList();

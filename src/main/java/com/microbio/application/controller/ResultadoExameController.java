@@ -30,7 +30,7 @@ public class ResultadoExameController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_MASTER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Listar todos os resultados (Admin)")
     public ResponseEntity<List<ResultadoExameDTO>> getAll() {
         return ResponseEntity.ok(service.findAll());
@@ -50,21 +50,21 @@ public class ResultadoExameController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_MASTER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Cadastrar resultado de exame (Admin)")
     public ResponseEntity<ResultadoExameDTO> create(@RequestBody ResultadoExameCreateDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.create(dto));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_MASTER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Atualizar resultado de exame (Admin)")
     public ResponseEntity<ResultadoExameDTO> update(@PathVariable Long id, @RequestBody ResultadoExameUpdateDTO dto) {
         return ResponseEntity.ok(service.update(id, dto));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_MASTER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Remover resultado de exame (Admin)")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
@@ -78,7 +78,7 @@ public class ResultadoExameController {
     }
 
     @PostMapping(value = "/{id}/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_MASTER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Fazer upload do PDF do resultado (Admin)")
     public ResponseEntity<ResultadoExameDTO> upload(@PathVariable Long id,
                                                     @RequestParam("file") MultipartFile file) {

@@ -284,16 +284,12 @@ public class OrcamentoService {
         Usuario executor = usuarioRepository.findByUsername(executorUsername)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com username: " + executorUsername));
 
-        if (!"ADMIN_MASTER".equals(executor.getRole())) {
-            throw new BusinessException("Apenas administradores Master podem transferir responsáveis.");
-        }
-
         Usuario novoResponsavel = null;
         if (novoResponsavelId != null) {
             novoResponsavel = usuarioRepository.findById(novoResponsavelId)
                     .orElseThrow(() -> new ResourceNotFoundException("Usuário", novoResponsavelId));
 
-            if (!"ADMIN".equals(novoResponsavel.getRole()) && !"ADMIN_MASTER".equals(novoResponsavel.getRole())) {
+            if (!"ADMIN".equals(novoResponsavel.getRole())) {
                 throw new BusinessException("O responsável do orçamento deve ser um administrador.");
             }
         }

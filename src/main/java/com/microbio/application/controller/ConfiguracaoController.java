@@ -10,7 +10,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/configuracoes")
-@PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_MASTER')")
+@PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "Admin - Configurações", description = "Endpoints de configurações administrativas")
 public class ConfiguracaoController {
 

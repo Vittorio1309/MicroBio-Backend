@@ -70,33 +70,30 @@ public class DataInitializer {
                 System.out.println("✓ Usuários iniciais criados: admin/admin123 | user/user123");
             }
 
-            // Criar Pessoa Master para o perfil
-            Pessoa pessoaMaster = pessoaRepository.findAll().stream()
-                    .filter(p -> "Master".equals(p.getNome()))
-                    .findFirst()
-                    .orElseGet(() -> pessoaRepository.save(new Pessoa("Master", "master@microbio.com.br", "(41) 99999-9999")));
-
-            java.util.Optional<Usuario> masterOpt = usuarioRepository.findByUsername("master");
-            if (masterOpt.isEmpty()) {
-                Usuario master = new Usuario("master", passwordEncoder.encode("Master123"), "ADMIN_MASTER");
-                master.setPessoaId(pessoaMaster.getId());
-                usuarioRepository.save(master);
-                System.out.println("✓ Usuário master de demonstração criado: master/Master123");
-            } else {
-                Usuario master = masterOpt.get();
-                master.setSenha(passwordEncoder.encode("Master123"));
-                master.setRole("ADMIN_MASTER");
-                master.setPessoaId(pessoaMaster.getId());
-                usuarioRepository.save(master);
-                System.out.println("✓ Usuário master de demonstração atualizado com a senha Master123");
-            }
-
-            // Usuário MicroBio master principal
+            // Usuário MicroBio principal
             if (usuarioRepository.findByUsername("MicroBio").isEmpty()) {
-                Usuario microBio = new Usuario("MicroBio", passwordEncoder.encode("1234"), "ADMIN_MASTER");
+                Usuario microBio = new Usuario("MicroBio", passwordEncoder.encode("1234"), "ADMIN");
                 usuarioRepository.save(microBio);
                 System.out.println("✓ Usuário principal criado: MicroBio/1234");
+            } else {
+                // Migrar role legado ADMIN_MASTER → ADMIN
+                usuarioRepository.findByUsername("MicroBio").ifPresent(u -> {
+                    if ("ADMIN_MASTER".equals(u.getRole())) {
+                        u.setRole("ADMIN");
+                        usuarioRepository.save(u);
+                        System.out.println("✓ Usuário MicroBio migrado de ADMIN_MASTER para ADMIN");
+                    }
+                });
             }
+
+            // Migrar qualquer outro usuário com role ADMIN_MASTER legado
+            usuarioRepository.findAll().stream()
+                    .filter(u -> "ADMIN_MASTER".equals(u.getRole()))
+                    .forEach(u -> {
+                        u.setRole("ADMIN");
+                        usuarioRepository.save(u);
+                        System.out.println("✓ Usuário '" + u.getUsername() + "' migrado de ADMIN_MASTER para ADMIN");
+                    });
 
             // Configuração padrão de prazo de acompanhamento
             if (configuracaoRepository.findByChave("prazo_acompanhamento_orcamentos").isEmpty()) {

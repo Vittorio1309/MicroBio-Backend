@@ -77,7 +77,7 @@ public class OrcamentoController {
     }
 
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_MASTER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Atualizar apenas o status do orçamento (Admin)")
     public ResponseEntity<OrcamentoDTO> patchStatus(
             @PathVariable Long id,
@@ -86,14 +86,14 @@ public class OrcamentoController {
     }
 
     @GetMapping("/{id}/observacoes")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_MASTER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Listar observações de um orçamento (Admin)")
     public ResponseEntity<List<ObservacaoOrcamentoDTO>> getObservacoes(@PathVariable Long id) {
         return ResponseEntity.ok(service.getObservacoes(id));
     }
 
     @PostMapping("/{id}/observacoes")
-    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_MASTER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Adicionar observação a um orçamento (Admin)")
     public ResponseEntity<ObservacaoOrcamentoDTO> addObservacao(
             @PathVariable Long id,
@@ -104,8 +104,8 @@ public class OrcamentoController {
     }
 
     @PatchMapping("/{id}/responsavel")
-    @PreAuthorize("hasRole('ADMIN_MASTER')")
-    @Operation(summary = "Transferir responsável do orçamento (Master)")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Transferir responsável do orçamento (Admin)")
     public ResponseEntity<OrcamentoDTO> transferirResponsavel(
             @PathVariable Long id,
             @RequestBody com.microbio.application.dto.ResponsavelUpdateDTO dto,

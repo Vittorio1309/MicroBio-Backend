@@ -70,12 +70,12 @@ class ComercialServiceTest {
 
         when(orcamentoRepository.findAll()).thenReturn(List.of(o1, o2, o3, o4, o5));
 
-        ComercialAnaliseDTO dto = service.obterAnaliseComercial("admin", "ADMIN_MASTER", null);
+        ComercialAnaliseDTO dto = service.obterAnaliseComercial("admin", "ADMIN", null);
 
         assertThat(dto.leadsRecebidos()).isEqualTo(5);
         assertThat(dto.leadsConvertidos()).isEqualTo(2);
         assertThat(dto.leadsPerdidos()).isEqualTo(1);
-        assertThat(dto.taxaConversao()).isEqualTo(40.0); // 2/5 * 100
+        assertThat(dto.taxaConversao()).isEqualTo(20.0); // 1 FINALIZADO / 5 total * 100
         // (2 hours + 4 hours) / 2 = 3.0 hours
         assertThat(dto.tempoMedioConversaoHoras()).isEqualTo(3.0);
         assertThat(dto.orcamentosAtrasados()).isEqualTo(1); // o4 is delayed, o5 is not

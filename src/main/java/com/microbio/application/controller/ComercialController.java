@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/admin/comercial")
-@PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_MASTER')")
+@PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "Admin - Comercial", description = "Endpoints de análise comercial e conversão")
 public class ComercialController {
 

@@ -15,5 +15,7 @@ public record ComercialAnaliseDTO(
     long leadsConcluidos,
     long leadsEmAberto,
     BigDecimal valorPotencial,
-    BigDecimal valorEmRisco
+    BigDecimal valorEmRisco,
+    BigDecimal valorConvertido,
+    BigDecimal valorPerdido
 ) {}

@@ -34,7 +34,7 @@ public class UsuarioAdminController {
     }
 
     @GetMapping("/administradores")
-    @Operation(summary = "Listar todos os usuários com perfis administrativos (ADMIN, ADMIN_MASTER)")
+    @Operation(summary = "Listar todos os usuários com perfil administrativo (ADMIN)")
     public ResponseEntity<List<UsuarioResponseDTO>> getAdministradores() {
         return ResponseEntity.ok(service.findAdministradores());
     }

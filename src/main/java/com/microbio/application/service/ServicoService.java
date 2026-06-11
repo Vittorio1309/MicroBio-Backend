@@ -51,24 +51,25 @@ public class ServicoService {
         servico.setDescricao(dto.descricao());
         servico.setPreco(dto.preco());
         servico.setTipo(dto.tipo());
-        Servico saved = repository.save(servico);
 
-        if (dto.perguntas() != null && !dto.perguntas().isEmpty()) {
+        if (dto.perguntas() != null) {
             for (String texto : dto.perguntas()) {
                 if (texto != null && !texto.isBlank()) {
                     PerguntaServico p = new PerguntaServico();
                     p.setPergunta(texto.trim());
                     p.setObrigatoria(true);
-                    p.setServico(saved);
-                    perguntaRepository.save(p);
+                    p.setServico(servico);
+                    servico.getPerguntas().add(p);
                 }
             }
         }
 
+        Servico saved = repository.save(servico);
+
         auditLogService.log("CRIACAO_SERVICO", "Servico", saved.getId().toString(),
                 "Tipo de exame/serviço '" + saved.getNome() + "' criado");
 
-        return toDTOById(saved.getId(), saved);
+        return toDTO(saved);
     }
 
     public ServicoDTO update(Long id, ServicoUpdateDTO dto) {
@@ -78,24 +79,25 @@ public class ServicoService {
         if (dto.descricao() != null) servico.setDescricao(dto.descricao());
         if (dto.preco() != null) servico.setPreco(dto.preco());
         if (dto.tipo() != null) servico.setTipo(dto.tipo());
-        Servico saved = repository.save(servico);
 
         if (dto.perguntas() != null) {
-            perguntaRepository.deleteByServicoId(id);
+            servico.getPerguntas().clear();
             for (String texto : dto.perguntas()) {
                 if (texto != null && !texto.isBlank()) {
                     PerguntaServico p = new PerguntaServico();
                     p.setPergunta(texto.trim());
                     p.setObrigatoria(true);
-                    p.setServico(saved);
-                    perguntaRepository.save(p);
+                    p.setServico(servico);
+                    servico.getPerguntas().add(p);
                 }
             }
         }
 
+        Servico saved = repository.save(servico);
+
         auditLogService.log("ALTERACAO_SERVICO", "Servico", saved.getId().toString(),
                 "Tipo de exame/serviço '" + saved.getNome() + "' atualizado");
-        return toDTOById(id, saved);
+        return toDTO(saved);
     }
 
     public void delete(Long id) {
@@ -107,13 +109,9 @@ public class ServicoService {
     }
 
     private ServicoDTO toDTO(Servico s) {
-        return toDTOById(s.getId(), s);
-    }
-
-    private ServicoDTO toDTOById(Long servicoId, Servico s) {
-        List<PerguntaServicoDTO> perguntas = perguntaRepository.findByServicoId(servicoId)
+        List<PerguntaServicoDTO> perguntas = perguntaRepository.findByServicoId(s.getId())
                 .stream()
-                .map(p -> new PerguntaServicoDTO(p.getId(), p.getPergunta(), p.getObrigatoria(), servicoId))
+                .map(p -> new PerguntaServicoDTO(p.getId(), p.getPergunta(), p.getObrigatoria(), s.getId()))
                 .toList();
         return new ServicoDTO(s.getId(), s.getNome(), s.getDescricao(), s.getPreco(), s.getTipo(), perguntas);
     }

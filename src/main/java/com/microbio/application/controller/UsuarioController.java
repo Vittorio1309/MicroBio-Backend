@@ -22,7 +22,7 @@ public class UsuarioController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'ADMIN_MASTER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Listar usuários, opcionalmente filtrados por role (ex: ?role=USER)")
     public ResponseEntity<List<UsuarioResponseDTO>> getAll(
             @RequestParam(required = false) String role) {
