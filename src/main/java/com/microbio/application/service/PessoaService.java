@@ -17,6 +17,8 @@ import java.util.List;
 @Transactional
 public class PessoaService {
 
+    private static final String ENTITY_PESSOA = "Pessoa";
+
     private final PessoaRepository repository;
     private final OrcamentoRepository orcamentoRepository;
     private final AuditLogService auditLogService;
@@ -38,7 +40,7 @@ public class PessoaService {
     public PessoaDTO findById(Long id) {
         return repository.findById(id)
                 .map(this::toDTO)
-                .orElseThrow(() -> new ResourceNotFoundException("Pessoa", id));
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_PESSOA, id));
     }
 
     public PessoaDTO create(PessoaCreateDTO dto) {
@@ -48,14 +50,14 @@ public class PessoaService {
 
         Pessoa pessoa = new Pessoa(dto.nome(), dto.email(), dto.telefone());
         Pessoa saved = repository.save(pessoa);
-        auditLogService.log("CRIACAO_CLIENTE", "Pessoa", saved.getId().toString(),
+        auditLogService.log("CRIACAO_CLIENTE", ENTITY_PESSOA, saved.getId().toString(),
                 "Cliente '" + saved.getNome() + "' cadastrado");
         return toDTO(saved);
     }
 
     public PessoaDTO update(Long id, PessoaUpdate dto) {
         Pessoa pessoa = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Pessoa", id));
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_PESSOA, id));
 
         if (dto.email() != null && !dto.email().equals(pessoa.getEmail()) && repository.existsByEmail(dto.email())) {
             throw new BusinessException("Já existe um contato cadastrado com o email: " + dto.email());
@@ -66,17 +68,17 @@ public class PessoaService {
         if (dto.telefone() != null) pessoa.setTelefone(dto.telefone());
 
         Pessoa saved = repository.save(pessoa);
-        auditLogService.log("ALTERACAO_CLIENTE", "Pessoa", saved.getId().toString(),
+        auditLogService.log("ALTERACAO_CLIENTE", ENTITY_PESSOA, saved.getId().toString(),
                 "Cliente '" + saved.getNome() + "' atualizado");
         return toDTO(saved);
     }
 
     public void delete(Long id) {
         if (!repository.existsById(id)) {
-            throw new ResourceNotFoundException("Pessoa", id);
+            throw new ResourceNotFoundException(ENTITY_PESSOA, id);
         }
         repository.deleteById(id);
-        auditLogService.log("EXCLUSAO_CLIENTE", "Pessoa", id.toString(),
+        auditLogService.log("EXCLUSAO_CLIENTE", ENTITY_PESSOA, id.toString(),
                 "Cliente ID " + id + " excluído");
     }
 

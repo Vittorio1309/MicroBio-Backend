@@ -27,6 +27,8 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Autenticação", description = "Endpoints de autenticação")
 public class AuthController {
 
+    private static final String ENTITY_USUARIO = "Usuario";
+
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final UsuarioRepository usuarioRepository;
@@ -64,7 +66,7 @@ public class AuthController {
                     .orElse("ROLE_USER");
 
             String roleName = role.startsWith("ROLE_") ? role.substring(5) : role;
-            auditLogService.log(userDetails.getUsername(), roleName, "LOGIN", "Usuario", userDetails.getUsername(), "Login realizado com sucesso");
+            auditLogService.log(userDetails.getUsername(), roleName, "LOGIN", ENTITY_USUARIO, userDetails.getUsername(), "Login realizado com sucesso");
 
             return ResponseEntity.ok(new AuthResponse(true, "Login realizado com sucesso", userDetails.getUsername(), token, role));
 
@@ -110,7 +112,7 @@ public class AuthController {
         usuario.setPessoaId(pessoaId);
         usuarioRepository.save(usuario);
 
-        auditLogService.log(username, usuario.getRole(), "VINCULAR_PESSOA", "Usuario", username, "Usuário vinculado à Pessoa ID: " + pessoaId);
+        auditLogService.log(username, usuario.getRole(), "VINCULAR_PESSOA", ENTITY_USUARIO, username, "Usuário vinculado à Pessoa ID: " + pessoaId);
 
         return ResponseEntity.ok(new AuthResponse(true, "Pessoa vinculada com sucesso", username, null, usuario.getRole()));
     }
@@ -125,7 +127,7 @@ public class AuthController {
                     .findFirst()
                     .orElse("USER");
             String roleName = role.startsWith("ROLE_") ? role.substring(5) : role;
-            auditLogService.log(username, roleName, "LOGOUT", "Usuario", username, "Logout realizado com sucesso");
+            auditLogService.log(username, roleName, "LOGOUT", ENTITY_USUARIO, username, "Logout realizado com sucesso");
         }
         return ResponseEntity.ok().build();
     }

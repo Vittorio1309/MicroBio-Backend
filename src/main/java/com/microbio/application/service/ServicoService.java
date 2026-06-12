@@ -15,6 +15,9 @@ import java.util.List;
 @Transactional
 public class ServicoService {
 
+    private static final String ENTITY_SERVICO = "Serviço";
+    private static final String LOG_TIPO_SERVICO = "Tipo de exame/serviço";
+
     private final ServicoRepository repository;
     private final PerguntaServicoRepository perguntaRepository;
     private final AuditLogService auditLogService;
@@ -36,13 +39,13 @@ public class ServicoService {
     public ServicoDTO findById(Long id) {
         return repository.findById(id)
                 .map(this::toDTO)
-                .orElseThrow(() -> new ResourceNotFoundException("Serviço", id));
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_SERVICO, id));
     }
 
     // Usado internamente
     public Servico findEntityById(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Serviço", id));
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_SERVICO, id));
     }
 
     public ServicoDTO create(ServicoCreateDTO dto) {
@@ -67,14 +70,14 @@ public class ServicoService {
         Servico saved = repository.save(servico);
 
         auditLogService.log("CRIACAO_SERVICO", "Servico", saved.getId().toString(),
-                "Tipo de exame/serviço '" + saved.getNome() + "' criado");
+                LOG_TIPO_SERVICO + " '" + saved.getNome() + "' criado");
 
         return toDTO(saved);
     }
 
     public ServicoDTO update(Long id, ServicoUpdateDTO dto) {
         Servico servico = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Serviço", id));
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_SERVICO, id));
         if (dto.nome() != null) servico.setNome(dto.nome());
         if (dto.descricao() != null) servico.setDescricao(dto.descricao());
         if (dto.preco() != null) servico.setPreco(dto.preco());
@@ -96,16 +99,16 @@ public class ServicoService {
         Servico saved = repository.save(servico);
 
         auditLogService.log("ALTERACAO_SERVICO", "Servico", saved.getId().toString(),
-                "Tipo de exame/serviço '" + saved.getNome() + "' atualizado");
+                LOG_TIPO_SERVICO + " '" + saved.getNome() + "' atualizado");
         return toDTO(saved);
     }
 
     public void delete(Long id) {
         Servico servico = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Serviço", id));
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_SERVICO, id));
         repository.deleteById(id);
         auditLogService.log("EXCLUSAO_SERVICO", "Servico", id.toString(),
-                "Tipo de exame/serviço '" + servico.getNome() + "' excluído");
+                LOG_TIPO_SERVICO + " '" + servico.getNome() + "' excluído");
     }
 
     private ServicoDTO toDTO(Servico s) {

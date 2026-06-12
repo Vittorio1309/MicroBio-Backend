@@ -31,6 +31,9 @@ import java.util.UUID;
 @Transactional
 public class ResultadoExameService {
 
+    private static final String ENTITY_RESULTADO_EXAME = "Resultado de Exame";
+    private static final String LOG_RESULTADO_EXAME = "ResultadoExame";
+
     private final ResultadoExameRepository repository;
     private final UsuarioRepository usuarioRepository;
     private final AuditLogService auditLogService;
@@ -60,7 +63,7 @@ public class ResultadoExameService {
     public ResultadoExameDTO findById(Long id) {
         return repository.findById(id)
                 .map(this::toDTO)
-                .orElseThrow(() -> new ResourceNotFoundException("Resultado de Exame", id));
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_RESULTADO_EXAME, id));
     }
 
     @Transactional(readOnly = true)
@@ -88,14 +91,14 @@ public class ResultadoExameService {
         resultado.setUsuario(usuario);
 
         ResultadoExame saved = repository.save(resultado);
-        auditLogService.log("CRIACAO_RESULTADO_EXAME", "ResultadoExame", saved.getId().toString(),
+        auditLogService.log("CRIACAO_RESULTADO_EXAME", LOG_RESULTADO_EXAME, saved.getId().toString(),
                 "Resultado de exame criado para o usuário: " + usuario.getUsername());
         return toDTO(saved);
     }
 
     public ResultadoExameDTO update(Long id, ResultadoExameUpdateDTO dto) {
         ResultadoExame resultado = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Resultado de Exame", id));
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_RESULTADO_EXAME, id));
 
         if (dto.descricao() != null) resultado.setDescricao(dto.descricao());
         if (dto.laudo() != null) resultado.setLaudo(dto.laudo());
@@ -103,14 +106,14 @@ public class ResultadoExameService {
         if (dto.status() != null) resultado.setStatus(dto.status());
 
         ResultadoExame saved = repository.save(resultado);
-        auditLogService.log("ALTERACAO_RESULTADO_EXAME", "ResultadoExame", saved.getId().toString(),
+        auditLogService.log("ALTERACAO_RESULTADO_EXAME", LOG_RESULTADO_EXAME, saved.getId().toString(),
                 "Resultado de exame #" + saved.getId() + " atualizado");
         return toDTO(saved);
     }
 
     public void delete(Long id) {
         ResultadoExame resultado = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Resultado de Exame", id));
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_RESULTADO_EXAME, id));
         String storedPath = resultado.getArquivoUrl();
         if (storedPath != null && !storedPath.startsWith("http")) {
             Path filePath = uploadsDir.resolve(storedPath).normalize();
@@ -119,13 +122,13 @@ public class ResultadoExameService {
             }
         }
         repository.deleteById(id);
-        auditLogService.log("EXCLUSAO_RESULTADO_EXAME", "ResultadoExame", id.toString(),
+        auditLogService.log("EXCLUSAO_RESULTADO_EXAME", LOG_RESULTADO_EXAME, id.toString(),
                 "Resultado de exame #" + id + " excluído");
     }
 
     public ResultadoExameDTO visualizar(Long id, String authenticatedUsername) {
         ResultadoExame resultado = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Resultado de Exame", id));
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_RESULTADO_EXAME, id));
         if (!resultado.getUsuario().getUsername().equals(authenticatedUsername)) {
             throw new BusinessException("Acesso negado.");
         }
@@ -139,7 +142,7 @@ public class ResultadoExameService {
 
     public ResultadoExameDTO uploadArquivo(Long id, MultipartFile file) {
         ResultadoExame resultado = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Resultado de Exame", id));
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_RESULTADO_EXAME, id));
 
         if (file.isEmpty()) {
             throw new BusinessException("Arquivo não pode ser vazio.");
@@ -161,7 +164,7 @@ public class ResultadoExameService {
 
     public Resource downloadArquivo(Long id, String authenticatedUsername) {
         ResultadoExame resultado = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Resultado de Exame", id));
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_RESULTADO_EXAME, id));
 
         boolean isOwner = resultado.getUsuario().getUsername().equals(authenticatedUsername);
         boolean isAdmin = usuarioRepository.findByUsername(authenticatedUsername)

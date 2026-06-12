@@ -19,6 +19,8 @@ import java.util.List;
 @Transactional
 public class UsuarioAdminService {
 
+    private static final String ENTITY_USUARIO = "Usuario";
+
     private final UsuarioRepository repository;
     private final PessoaRepository pessoaRepository;
     private final PasswordEncoder passwordEncoder;
@@ -61,7 +63,7 @@ public class UsuarioAdminService {
         usuario.setPessoaId(dto.pessoaId());
 
         Usuario saved = repository.save(usuario);
-        auditLogService.log("CRIACAO_USUARIO", "Usuario", saved.getId().toString(),
+        auditLogService.log("CRIACAO_USUARIO", ENTITY_USUARIO, saved.getId().toString(),
                 "Usuário '" + saved.getUsername() + "' com perfil '" + saved.getRole() + "' criado");
         return toDTO(saved);
     }
@@ -82,7 +84,7 @@ public class UsuarioAdminService {
         }
 
         Usuario saved = repository.save(usuario);
-        auditLogService.log("ALTERACAO_USUARIO", "Usuario", saved.getId().toString(),
+        auditLogService.log("ALTERACAO_USUARIO", ENTITY_USUARIO, saved.getId().toString(),
                 "Usuário '" + saved.getUsername() + "' atualizado");
         return toDTO(saved);
     }
@@ -92,7 +94,7 @@ public class UsuarioAdminService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário", id));
 
         repository.deleteById(id);
-        auditLogService.log("EXCLUSAO_USUARIO", "Usuario", id.toString(),
+        auditLogService.log("EXCLUSAO_USUARIO", ENTITY_USUARIO, id.toString(),
                 "Usuário '" + usuario.getUsername() + "' excluído");
     }
 

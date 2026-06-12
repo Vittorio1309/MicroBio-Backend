@@ -18,6 +18,11 @@ import java.util.List;
 @Transactional
 public class OrcamentoService {
 
+    private static final String ENTITY_ORCAMENTO = "Orçamento";
+    private static final String PREFIXO_ORCAMENTO = "Orçamento #";
+    private static final String ENTITY_PESSOA     = "Pessoa";
+    private static final String ENTITY_SERVICO    = "Serviço";
+
     private final OrcamentoRepository orcamentoRepository;
     private final PessoaRepository pessoaRepository;
     private final ServicoRepository servicoRepository;
@@ -58,7 +63,7 @@ public class OrcamentoService {
     public OrcamentoDTO findById(Long id) {
         return orcamentoRepository.findById(id)
                 .map(this::toDTO)
-                .orElseThrow(() -> new ResourceNotFoundException("Orçamento", id));
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_ORCAMENTO, id));
     }
 
     @Transactional(readOnly = true)
@@ -73,10 +78,10 @@ public class OrcamentoService {
 
     public OrcamentoDTO create(OrcamentoCreateDTO dto) {
         Pessoa pessoa = pessoaRepository.findById(dto.pessoaId())
-                .orElseThrow(() -> new ResourceNotFoundException("Pessoa", dto.pessoaId()));
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_PESSOA, dto.pessoaId()));
 
         Servico servico = servicoRepository.findById(dto.servicoId())
-                .orElseThrow(() -> new ResourceNotFoundException("Serviço", dto.servicoId()));
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_SERVICO, dto.servicoId()));
 
         // Validar respostas obrigatórias
         List<PerguntaServico> perguntasObrigatorias = perguntaRepository
@@ -107,7 +112,7 @@ public class OrcamentoService {
 
         Orcamento saved = orcamentoRepository.save(orcamento);
         auditLogService.log("CRIACAO_ORCAMENTO", "Orcamento", saved.getId().toString(), 
-                "Orçamento #" + saved.getId() + " criado para o cliente " + pessoa.getNome() + " no valor de " + saved.getValorTotal());
+                PREFIXO_ORCAMENTO + saved.getId() + " criado para o cliente " + pessoa.getNome() + " no valor de " + saved.getValorTotal());
 
         // Salvar respostas
         if (dto.respostas() != null) {
@@ -128,7 +133,7 @@ public class OrcamentoService {
 
     public OrcamentoDTO updateStatus(Long id, OrcamentoUpdateDTO dto) {
         Orcamento orcamento = orcamentoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Orçamento", id));
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_ORCAMENTO, id));
 
         OrcamentoStatus statusAntigo = orcamento.getStatus();
         boolean statusAlterado = dto.status() != null && dto.status() != statusAntigo;
@@ -138,13 +143,13 @@ public class OrcamentoService {
 
         if (dto.pessoaId() != null) {
             Pessoa pessoa = pessoaRepository.findById(dto.pessoaId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Pessoa", dto.pessoaId()));
+                    .orElseThrow(() -> new ResourceNotFoundException(ENTITY_PESSOA, dto.pessoaId()));
             orcamento.setPessoa(pessoa);
         }
 
         if (dto.servicoId() != null) {
             Servico servico = servicoRepository.findById(dto.servicoId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Serviço", dto.servicoId()));
+                    .orElseThrow(() -> new ResourceNotFoundException(ENTITY_SERVICO, dto.servicoId()));
             orcamento.setServico(servico);
         }
 
@@ -156,7 +161,7 @@ public class OrcamentoService {
                     "Status do orçamento #" + saved.getId() + " alterado de " + statusAntigo + " para " + saved.getStatus());
         } else {
             auditLogService.log("ALTERACAO_ORCAMENTO", "Orcamento", saved.getId().toString(),
-                    "Orçamento #" + saved.getId() + " atualizado");
+                    PREFIXO_ORCAMENTO + saved.getId() + " atualizado");
         }
 
         return toDTO(saved);
@@ -164,9 +169,9 @@ public class OrcamentoService {
 
     public OrcamentoDTO createByAdmin(OrcamentoCreateDTO dto) {
         Pessoa pessoa = pessoaRepository.findById(dto.pessoaId())
-                .orElseThrow(() -> new ResourceNotFoundException("Pessoa", dto.pessoaId()));
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_PESSOA, dto.pessoaId()));
         Servico servico = servicoRepository.findById(dto.servicoId())
-                .orElseThrow(() -> new ResourceNotFoundException("Serviço", dto.servicoId()));
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_SERVICO, dto.servicoId()));
 
         Orcamento orcamento = new Orcamento();
         LocalDateTime agora = LocalDateTime.now();
@@ -181,14 +186,14 @@ public class OrcamentoService {
         Orcamento saved = orcamentoRepository.save(orcamento);
 
         auditLogService.log("CRIACAO_ORCAMENTO", "Orcamento", saved.getId().toString(),
-                "Orçamento #" + saved.getId() + " criado por administrador para o cliente " + pessoa.getNome() + " no valor de " + saved.getValorTotal());
+                PREFIXO_ORCAMENTO + saved.getId() + " criado por administrador para o cliente " + pessoa.getNome() + " no valor de " + saved.getValorTotal());
 
         return toDTO(orcamentoRepository.findById(saved.getId()).orElseThrow());
     }
 
     public void delete(Long id) {
         if (!orcamentoRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Orçamento", id);
+            throw new ResourceNotFoundException(ENTITY_ORCAMENTO, id);
         }
         orcamentoRepository.deleteById(id);
     }
@@ -238,7 +243,7 @@ public class OrcamentoService {
     @Transactional(readOnly = true)
     public List<ObservacaoOrcamentoDTO> getObservacoes(Long orcamentoId) {
         if (!orcamentoRepository.existsById(orcamentoId)) {
-            throw new ResourceNotFoundException("Orçamento", orcamentoId);
+            throw new ResourceNotFoundException(ENTITY_ORCAMENTO, orcamentoId);
         }
         return observacaoRepository.findByOrcamentoIdOrderByDataCriacaoAsc(orcamentoId)
                 .stream()
@@ -253,7 +258,7 @@ public class OrcamentoService {
 
     public ObservacaoOrcamentoDTO addObservacao(Long orcamentoId, ObservacaoOrcamentoCreateDTO dto, String username) {
         Orcamento orcamento = orcamentoRepository.findById(orcamentoId)
-                .orElseThrow(() -> new ResourceNotFoundException("Orçamento", orcamentoId));
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_ORCAMENTO, orcamentoId));
 
         Usuario usuario = usuarioRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com username: " + username));
@@ -279,7 +284,7 @@ public class OrcamentoService {
 
     public OrcamentoDTO transferirResponsavel(Long orcamentoId, Long novoResponsavelId, String executorUsername) {
         Orcamento orcamento = orcamentoRepository.findById(orcamentoId)
-                .orElseThrow(() -> new ResourceNotFoundException("Orçamento", orcamentoId));
+                .orElseThrow(() -> new ResourceNotFoundException(ENTITY_ORCAMENTO, orcamentoId));
 
         Usuario executor = usuarioRepository.findByUsername(executorUsername)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com username: " + executorUsername));

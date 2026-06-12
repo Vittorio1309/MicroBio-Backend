@@ -206,16 +206,18 @@ class OrcamentoServiceTest {
     }
 
     @Test
-    void transferirResponsavel_whenExecutorIsNotMaster_throwsBusinessException() {
+    void transferirResponsavel_whenNovoResponsavelIsNotAdmin_throwsBusinessException() {
         Orcamento o = orcamento(1L, OrcamentoStatus.PENDENTE);
         Usuario executor = new Usuario("regular_admin", "encoded", "ADMIN");
+        Usuario naoAdmin = new Usuario("user1", "encoded", "USER");
 
         when(orcamentoRepository.findById(1L)).thenReturn(Optional.of(o));
         when(usuarioRepository.findByUsername("regular_admin")).thenReturn(Optional.of(executor));
+        when(usuarioRepository.findById(2L)).thenReturn(Optional.of(naoAdmin));
 
         assertThatThrownBy(() -> service.transferirResponsavel(1L, 2L, "regular_admin"))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("Apenas administradores Master podem transferir responsáveis.");
+                .hasMessageContaining("O responsável do orçamento deve ser um administrador.");
     }
 
     private Orcamento orcamento(Long id, OrcamentoStatus status) {
